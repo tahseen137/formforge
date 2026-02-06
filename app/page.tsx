@@ -105,7 +105,8 @@ export default function Home() {
       {/* Pricing */}
       <section className="container mx-auto px-4 py-16">
         <h2 className="text-3xl font-bold text-white mb-12 text-center">Simple Pricing</h2>
-        <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Free */}
           <div className="bg-gray-800/30 backdrop-blur rounded-xl p-8 border border-blue-800/20">
             <h3 className="text-2xl font-bold text-white mb-2">Free</h3>
             <div className="mb-6">
@@ -114,13 +115,16 @@ export default function Home() {
             </div>
             <ul className="space-y-3 mb-8">
               <li className="text-gray-300 flex items-center gap-2">
+                <span className="text-green-400">✓</span> 3 form endpoints
+              </li>
+              <li className="text-gray-300 flex items-center gap-2">
                 <span className="text-green-400">✓</span> 100 submissions/month
               </li>
               <li className="text-gray-300 flex items-center gap-2">
-                <span className="text-green-400">✓</span> Email notifications
+                <span className="text-green-400">✓</span> Basic templates
               </li>
               <li className="text-gray-300 flex items-center gap-2">
-                <span className="text-green-400">✓</span> Basic spam protection
+                <span className="text-green-400">✓</span> Email notifications
               </li>
             </ul>
             <Link 
@@ -130,33 +134,73 @@ export default function Home() {
               Get Started
             </Link>
           </div>
+          
+          {/* Pro */}
           <div className="bg-gradient-to-br from-blue-600/20 to-indigo-600/20 backdrop-blur rounded-xl p-8 border border-blue-500/50 relative">
             <div className="absolute -top-3 right-8 bg-gradient-to-r from-blue-500 to-indigo-500 text-white text-xs font-bold px-3 py-1 rounded-full">
               POPULAR
             </div>
             <h3 className="text-2xl font-bold text-white mb-2">Pro</h3>
             <div className="mb-6">
-              <span className="text-4xl font-bold text-white">$8</span>
+              <span className="text-4xl font-bold text-white">$19</span>
               <span className="text-gray-300">/month</span>
             </div>
             <ul className="space-y-3 mb-8">
               <li className="text-gray-200 flex items-center gap-2">
-                <span className="text-green-400">✓</span> Unlimited submissions
+                <span className="text-green-400">✓</span> Unlimited forms
               </li>
               <li className="text-gray-200 flex items-center gap-2">
-                <span className="text-green-400">✓</span> Email notifications
+                <span className="text-green-400">✓</span> 10K submissions/mo
               </li>
               <li className="text-gray-200 flex items-center gap-2">
-                <span className="text-green-400">✓</span> Advanced spam protection
+                <span className="text-green-400">✓</span> Custom branding
               </li>
               <li className="text-gray-200 flex items-center gap-2">
-                <span className="text-green-400">✓</span> Custom redirects
+                <span className="text-green-400">✓</span> File uploads
               </li>
             </ul>
-            <button className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg transition shadow-lg shadow-blue-500/50">
-              Coming Soon
-            </button>
+            <Link
+              href="/pricing"
+              className="block text-center w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg transition shadow-lg shadow-blue-500/50"
+            >
+              Start Free Trial
+            </Link>
           </div>
+          
+          {/* Business */}
+          <div className="bg-gray-800/30 backdrop-blur rounded-xl p-8 border border-blue-800/20">
+            <h3 className="text-2xl font-bold text-white mb-2">Business</h3>
+            <div className="mb-6">
+              <span className="text-4xl font-bold text-white">$49</span>
+              <span className="text-gray-400">/month</span>
+            </div>
+            <ul className="space-y-3 mb-8">
+              <li className="text-gray-300 flex items-center gap-2">
+                <span className="text-green-400">✓</span> Everything in Pro
+              </li>
+              <li className="text-gray-300 flex items-center gap-2">
+                <span className="text-green-400">✓</span> API access
+              </li>
+              <li className="text-gray-300 flex items-center gap-2">
+                <span className="text-green-400">✓</span> Team collaboration
+              </li>
+              <li className="text-gray-300 flex items-center gap-2">
+                <span className="text-green-400">✓</span> Priority support
+              </li>
+            </ul>
+            <Link 
+              href="/pricing"
+              className="block text-center px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition"
+            >
+              Start Free Trial
+            </Link>
+          </div>
+        </div>
+        
+        <div className="text-center mt-8">
+          <Link href="/pricing" className="text-blue-400 hover:text-blue-300 transition">
+            View all features →
+          </Link>
         </div>
       </section>
 
