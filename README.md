@@ -1,36 +1,64 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 📝 FormForge
+
+**Your form backend in 30 seconds.**
+
+FormForge is a form backend as a service. Stop writing backend code for simple forms — get a submission endpoint instantly and focus on building great products.
+
+![Screenshot](screenshot.png)
+
+## Features
+
+- ⚡ **Instant Setup** — Create an endpoint and start collecting immediately
+- 📧 **Email Notifications** — Get notified when someone submits
+- 🎨 **Works Anywhere** — Pure HTML forms, React, Vue, or any framework
+- 🔒 **Spam Protection** — Built-in protection against bots
+- 🔄 **Custom Redirects** — Send users anywhere after submission (Pro)
+
+## Tech Stack
+
+- **Framework:** Next.js 14
+- **Language:** TypeScript
+- **Styling:** Tailwind CSS
+- **Deployment:** Vercel
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+# Clone the repository
+git clone https://github.com/yourusername/formforge.git
+cd formforge
+
+# Install dependencies
+npm install
+
+# Run development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+# Build for production
+npm run build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Usage
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Point your form to your FormForge endpoint:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```html
+<form action="https://formforge-olive.vercel.app/api/submit/YOUR_ID" method="POST">
+  <input type="text" name="name" required />
+  <input type="email" name="email" required />
+  <textarea name="message"></textarea>
+  <button type="submit">Send</button>
+</form>
+```
 
-## Learn More
+## Deployment
 
-To learn more about Next.js, take a look at the following resources:
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/yourusername/formforge)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Live Demo
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+🔗 [formforge-olive.vercel.app](https://formforge-olive.vercel.app)
 
-## Deploy on Vercel
+## License
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT
