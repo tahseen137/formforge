@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 
 interface FormEndpoint {
   id: string;
@@ -16,6 +18,7 @@ interface FormSubmission {
   formId: string;
   data: Record<string, string | number | boolean>;
   timestamp: number;
+  isSpam?: boolean;
 }
 
 export default function Dashboard() {
@@ -26,9 +29,12 @@ export default function Dashboard() {
   const [formName, setFormName] = useState('');
   const [formEmail, setFormEmail] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
-    loadEndpoints();
+    checkAuth();
   }, []);
 
   useEffect(() => {
@@ -37,16 +43,41 @@ export default function Dashboard() {
     }
   }, [selectedForm]);
 
+  const checkAuth = async () => {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+
+    setUserEmail(user.email || null);
+    setLoading(false);
+    loadEndpoints();
+  };
+
+  const handleLogout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push('/');
+    router.refresh();
+  };
+
   const loadEndpoints = async () => {
     const res = await fetch('/api/endpoints');
-    const data = await res.json();
-    setEndpoints(data);
+    if (res.ok) {
+      const data = await res.json();
+      setEndpoints(data);
+    }
   };
 
   const loadSubmissions = async (formId: string) => {
     const res = await fetch(`/api/submissions/${formId}`);
-    const data = await res.json();
-    setSubmissions(data);
+    if (res.ok) {
+      const data = await res.json();
+      setSubmissions(data);
+    }
   };
 
   const createEndpoint = async (e: React.FormEvent) => {
@@ -87,6 +118,14 @@ export default function Dashboard() {
     return new Date(timestamp).toLocaleString();
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 flex items-center justify-center">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900">
       {/* Header */}
@@ -98,12 +137,21 @@ export default function Dashboard() {
             </div>
             <span className="text-xl font-bold text-white">FormForge</span>
           </Link>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
-          >
-            + New Form
-          </button>
+          <div className="flex items-center gap-4">
+            <span className="text-gray-400 text-sm hidden sm:block">{userEmail}</span>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition"
+            >
+              + New Form
+            </button>
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 text-gray-400 hover:text-white transition"
+            >
+              Logout
+            </button>
+          </div>
         </div>
       </header>
 
@@ -193,6 +241,9 @@ export default function Dashboard() {
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                           Data
                         </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
+                          Status
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-700/50">
@@ -203,13 +254,26 @@ export default function Dashboard() {
                           </td>
                           <td className="px-6 py-4 text-sm text-gray-300">
                             <div className="space-y-1">
-                              {Object.entries(submission.data).map(([key, value]) => (
+                              {Object.entries(submission.data)
+                                .filter(([key]) => !key.startsWith('_'))
+                                .map(([key, value]) => (
                                 <div key={key}>
                                   <span className="text-blue-400 font-medium">{key}:</span>{' '}
                                   <span>{String(value)}</span>
                                 </div>
                               ))}
                             </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            {submission.isSpam ? (
+                              <span className="px-2 py-1 bg-red-500/20 text-red-400 rounded text-xs">
+                                Spam
+                              </span>
+                            ) : (
+                              <span className="px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs">
+                                Valid
+                              </span>
+                            )}
                           </td>
                         </tr>
                       ))}

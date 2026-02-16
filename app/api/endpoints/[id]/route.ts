@@ -1,54 +1,75 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { storage } from '@/lib/storage';
+import { createClient } from '@/lib/supabase/server';
+import { dbStorage } from '@/lib/db-storage';
 
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
   const { id } = await params;
-  
-  if (!id || id.trim().length === 0) {
-    return NextResponse.json(
-      { error: 'Invalid endpoint ID' },
-      { status: 400 }
-    );
+
+  try {
+    // Get the form by endpoint_id to get the actual UUID
+    const form = await dbStorage.getEndpoint(id);
+    
+    if (!form) {
+      return NextResponse.json({ error: 'Endpoint not found' }, { status: 404 });
+    }
+
+    if (form.user_id !== user.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+
+    await dbStorage.deleteEndpoint(user.id, form.id);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Failed to delete endpoint:', error);
+    return NextResponse.json({ error: 'Failed to delete endpoint' }, { status: 500 });
   }
-
-  const endpoint = storage.getEndpoint(id);
-  if (!endpoint) {
-    return NextResponse.json(
-      { error: 'Form endpoint not found' },
-      { status: 404 }
-    );
-  }
-
-  const deleted = storage.deleteEndpoint(id);
-  
-  if (!deleted) {
-    return NextResponse.json(
-      { error: 'Failed to delete endpoint' },
-      { status: 500 }
-    );
-  }
-
-  console.log(`🗑️ Deleted endpoint: "${endpoint.name}" (${id})`);
-
-  return new NextResponse(null, { status: 204 });
 }
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-  
-  const endpoint = storage.getEndpoint(id);
-  if (!endpoint) {
-    return NextResponse.json(
-      { error: 'Form endpoint not found' },
-      { status: 404 }
-    );
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  return NextResponse.json(endpoint);
+  const { id } = await params;
+
+  try {
+    const form = await dbStorage.getEndpoint(id);
+    
+    if (!form) {
+      return NextResponse.json({ error: 'Endpoint not found' }, { status: 404 });
+    }
+
+    if (form.user_id !== user.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+
+    const transformed = {
+      id: form.endpoint_id,
+      name: form.name,
+      email: form.email,
+      createdAt: new Date(form.created_at).getTime(),
+      submissionCount: form.submission_count,
+    };
+
+    return NextResponse.json(transformed);
+  } catch (error) {
+    console.error('Failed to get endpoint:', error);
+    return NextResponse.json({ error: 'Failed to get endpoint' }, { status: 500 });
+  }
 }
