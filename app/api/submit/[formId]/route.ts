@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { dbStorage } from '@/lib/db-storage';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { sendFormNotification } from '@/lib/email';
 import {
   validateFormData,
@@ -15,9 +15,18 @@ export async function POST(
 ) {
   const { formId } = await params;
 
+  // Use admin client to bypass RLS (public submissions have no user session)
+  const supabase = createAdminClient();
+
   // Check if endpoint exists
-  const endpoint = await dbStorage.getEndpoint(formId);
-  if (!endpoint) {
+  const { data: endpoint, error: endpointError } = await supabase
+    .from('forms')
+    .select('*')
+    .eq('endpoint_id', formId)
+    .eq('is_active', true)
+    .single();
+
+  if (endpointError || !endpoint) {
     return NextResponse.json({ error: 'Form endpoint not found' }, { status: 404 });
   }
 
@@ -92,16 +101,16 @@ export async function POST(
   if (spamCheck.isSpam) {
     console.log(`Spam detected for form ${formId}:`, spamCheck.reason);
 
-    // Store spam submission for analysis
+    // Store spam submission for analysis using admin client
     const userAgent = request.headers.get('user-agent') || undefined;
-    await dbStorage.addSubmission(
-      formId,
-      sanitizeFormData(formData),
-      clientIp,
-      userAgent,
-      true,
-      spamCheck.reason
-    );
+    await supabase.from('submissions').insert({
+      form_id: endpoint.id,
+      data: sanitizeFormData(formData),
+      ip_address: clientIp,
+      user_agent: userAgent,
+      is_spam: true,
+      spam_reason: spamCheck.reason,
+    });
 
     // Return success to avoid revealing spam detection
     return NextResponse.json({
@@ -114,17 +123,22 @@ export async function POST(
   const redirectUrl = formData._redirect || formData.redirect;
   const sanitizedData = sanitizeFormData(formData);
 
-  // Store submission
+  // Store submission using admin client (bypasses RLS for public submissions)
   const userAgent = request.headers.get('user-agent') || undefined;
-  const submission = await dbStorage.addSubmission(
-    formId,
-    sanitizedData,
-    clientIp,
-    userAgent,
-    false
-  );
+  const { data: submission, error: submitError } = await supabase
+    .from('submissions')
+    .insert({
+      form_id: endpoint.id,
+      data: sanitizedData,
+      ip_address: clientIp,
+      user_agent: userAgent,
+      is_spam: false,
+    })
+    .select()
+    .single();
 
-  if (!submission) {
+  if (submitError || !submission) {
+    console.error('Error storing submission:', submitError);
     return NextResponse.json({ error: 'Failed to store submission' }, { status: 500 });
   }
 
@@ -144,14 +158,15 @@ export async function POST(
       submissionId: submission.id,
     });
 
-    // Log email status
-    await dbStorage.logEmail(
-      submission.id,
-      endpoint.email,
-      `New submission: ${endpoint.name}`,
-      emailResult.success ? 'sent' : 'failed',
-      emailResult.error
-    );
+    // Log email status using admin client
+    await supabase.from('email_logs').insert({
+      submission_id: submission.id,
+      recipient: endpoint.email,
+      subject: `New submission: ${endpoint.name}`,
+      status: emailResult.success ? 'sent' : 'failed',
+      error_message: emailResult.error || null,
+      sent_at: emailResult.success ? new Date().toISOString() : null,
+    });
 
     if (emailResult.success) {
       console.log(`📧 Email sent to: ${endpoint.email} (ID: ${emailResult.messageId})`);
@@ -208,9 +223,16 @@ export async function GET(
   { params }: { params: Promise<{ formId: string }> }
 ) {
   const { formId } = await params;
-  const endpoint = await dbStorage.getEndpoint(formId);
+  const supabase = createAdminClient();
 
-  if (!endpoint) {
+  const { data: endpoint, error } = await supabase
+    .from('forms')
+    .select('*')
+    .eq('endpoint_id', formId)
+    .eq('is_active', true)
+    .single();
+
+  if (error || !endpoint) {
     return NextResponse.json({ error: 'Form endpoint not found' }, { status: 404 });
   }
 
